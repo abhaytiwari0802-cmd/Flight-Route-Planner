@@ -1,0 +1,8 @@
+customtkinter
+numpy
+pandas
+networkx
+matplotlib
+seaborn
+plotly
+pytest
