@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Route Planner — Modern Aviation Dashboard</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cockpit: {
+                            bg: '#07162b',
+                            panel: '#0a1d35',
+                            card: 'rgba(10, 29, 53, 0.75)',
+                            border: '#1b3a5c',
+                            emerald: '#00c98d',
+                            cyan: '#19b5e6',
+                            blue: '#1e90ff',
+                            purple: '#a56bff',
+                            amber: '#f59e0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet.js CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body class="bg-[#07162b] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-black">
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-[#1b3a5c]/80 bg-[#07162b]/90 px-4 lg:px-8 py-3.5 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-lg shadow-emerald-500/10">
+                    ✈
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base font-extrabold tracking-wider text-white">FLIGHT PLANNER</h1>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">WEB 2.0</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 hidden sm:block">Plan · Explore · Fly &bull; Powered by Dijkstra & CSV Persistence</p>
+                </div>
+            </div>
+
+            <!-- Nav Tabs -->
+            <nav class="flex items-center gap-1.5 bg-[#0a1d35]/90 p-1.5 rounded-xl border border-[#1b3a5c]">
+                <button data-tab="planner" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-cyan-500/10 text-cyan-400 border-cyan-500/50">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    <span>Planner</span>
+                </button>
+                <button data-tab="network" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-transparent text-slate-400 hover:text-slate-200 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Network</span>
+                </button>
+                <button data-tab="analytics" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-transparent text-slate-400 hover:text-slate-200 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <span>Analytics</span>
+                </button>
+                <button data-tab="airports" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-transparent text-slate-400 hover:text-slate-200 transition-all hidden md:flex">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <span>Airports</span>
+                </button>
+                <button data-tab="routes" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-transparent text-slate-400 hover:text-slate-200 transition-all hidden md:flex">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    <span>Routes</span>
+                </button>
+            </nav>
+
+            <!-- Quick Info & Docs Link -->
+            <div class="flex items-center gap-3">
+                <div id="network-quick-stats" class="hidden sm:block">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs font-medium">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Loading data...
+                    </span>
+                </div>
+                <a href="/docs" target="_blank" class="px-2.5 py-1 rounded-lg text-xs font-mono text-cyan-400 border border-cyan-500/40 hover:bg-cyan-500/10 transition-colors flex items-center gap-1">
+                    <span>API Docs</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 flex flex-col">
+
+        <!-- ======================================================== -->
+        <!-- TAB 1: FLIGHT PLANNER & MAP VISUALIZER                    -->
+        <!-- ======================================================== -->
+        <div id="pane-planner" class="tab-content-pane flex-1 flex flex-col gap-5">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-stretch">
+                
+                <!-- Left Sidebar: Route Search & Itinerary Breakdown -->
+                <div class="lg:col-span-4 flex flex-col gap-4">
+                    
+                    <!-- Search Card -->
+                    <div class="glass-panel rounded-2xl p-5 border border-[#1b3a5c] relative shadow-xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-sm font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                Route Finder
+                            </h2>
+                            <span class="text-[11px] font-mono text-slate-400">Dijkstra Shortest</span>
+                        </div>
+
+                        <form id="route-plan-form" class="space-y-3.5">
+                            <!-- Origin Field -->
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                    Departure (Origin)
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="text" 
+                                        id="origin-input" 
+                                        placeholder="Enter code or city (e.g. JFK)" 
+                                        autocomplete="off"
+                                        class="glass-input w-full px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider uppercase font-semibold pl-9"
+                                    />
+                                    <span class="absolute left-3 top-2.5 text-cyan-400 font-bold text-sm">●</span>
+                                </div>
+                                <!-- Dropdown Suggestions -->
+                                <div id="origin-suggestions" class="absolute z-30 left-0 right-0 mt-1 glass-panel rounded-xl shadow-2xl border border-cyan-500/40 max-h-56 overflow-y-auto hidden"></div>
+                            </div>
+
+                            <!-- Swap Button -->
+                            <div class="flex justify-center -my-1">
+                                <button type="button" id="swap-airports-btn" title="Swap Origin and Destination" class="p-1.5 rounded-full bg-[#0d2542] hover:bg-[#134a7c] border border-[#1b3a5c] text-cyan-400 transition-all shadow-md">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- Destination Field -->
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                    Arrival (Destination)
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="text" 
+                                        id="dest-input" 
+                                        placeholder="Enter code or city (e.g. LAX)" 
+                                        autocomplete="off"
+                                        class="glass-input w-full px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider uppercase font-semibold pl-9"
+                                    />
+                                    <span class="absolute left-3 top-2.5 text-emerald-400 font-bold text-sm">●</span>
+                                </div>
+                                <!-- Dropdown Suggestions -->
+                                <div id="dest-suggestions" class="absolute z-30 left-0 right-0 mt-1 glass-panel rounded-xl shadow-2xl border border-emerald-500/40 max-h-56 overflow-y-auto hidden"></div>
+                            </div>
+
+                            <!-- Quick Action Chips -->
+                            <div class="pt-1">
+                                <span class="text-[10px] text-slate-400 font-medium">Quick Routes:</span>
+                                <div class="flex flex-wrap gap-1.5 mt-1">
+                                    <button type="button" class="quick-route-chip text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#0d2542] hover:bg-[#134a7c] text-slate-300 border border-[#1b3a5c] transition-colors" data-from="JFK" data-to="LAX">JFK➔LAX</button>
+                                    <button type="button" class="quick-route-chip text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#0d2542] hover:bg-[#134a7c] text-slate-300 border border-[#1b3a5c] transition-colors" data-from="ORD" data-to="MIA">ORD➔MIA</button>
+                                    <button type="button" class="quick-route-chip text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#0d2542] hover:bg-[#134a7c] text-slate-300 border border-[#1b3a5c] transition-colors" data-from="SEA" data-to="ATL">SEA➔ATL</button>
+                                    <button type="button" class="quick-route-chip text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#0d2542] hover:bg-[#134a7c] text-slate-300 border border-[#1b3a5c] transition-colors" data-from="SFO" data-to="BOS">SFO➔BOS</button>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" id="plan-submit-btn" class="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs tracking-wider uppercase transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                Find Optimal Route
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Route Overview Summary Card -->
+                    <div id="route-summary-card" class="glass-panel rounded-2xl p-5 border border-[#1b3a5c] flex flex-col gap-3 shadow-xl">
+                        <div class="flex items-center justify-between border-b border-[#1b3a5c]/80 pb-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Route Summary</h3>
+                            <div id="stat-total-layovers"></div>
+                        </div>
+
+                        <!-- Mini stats grid -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="glass-panel-subtle p-2.5 rounded-xl border border-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase font-semibold">Total Distance</div>
+                                <div id="stat-total-distance" class="text-sm font-extrabold text-emerald-400 font-mono mt-0.5">—</div>
+                            </div>
+                            <div class="glass-panel-subtle p-2.5 rounded-xl border border-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase font-semibold">Est. Duration</div>
+                                <div id="stat-total-duration" class="text-sm font-extrabold text-cyan-400 font-mono mt-0.5">—</div>
+                            </div>
+                            <div class="glass-panel-subtle p-2.5 rounded-xl border border-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase font-semibold">Total Legs</div>
+                                <div id="stat-total-legs" class="text-sm font-extrabold text-purple-400 font-mono mt-0.5">—</div>
+                            </div>
+                        </div>
+
+                        <!-- Itinerary Leg by Leg breakdown -->
+                        <div class="mt-2">
+                            <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                <span>Flight Segments</span>
+                                <span class="text-[10px] text-slate-500 font-normal">Hop details</span>
+                            </div>
+                            <div id="itinerary-legs-container" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
+                        </div>
+
+                        <!-- Alternative Paths Section -->
+                        <div class="mt-2 pt-2 border-t border-[#1b3a5c]/80">
+                            <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                <span>Alternative Routes</span>
+                                <span class="text-[10px] text-slate-500 font-normal">Click to preview</span>
+                            </div>
+                            <div id="alternatives-list-container" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Main Column: Leaflet Interactive Map -->
+                <div class="lg:col-span-8 flex flex-col">
+                    <div class="glass-panel rounded-2xl p-4 border border-[#1b3a5c] flex-1 flex flex-col relative overflow-hidden shadow-2xl min-h-[560px]">
+                        
+                        <!-- Map Header Bar -->
+                        <div class="flex items-center justify-between mb-3 z-10">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
+                                <h2 class="text-sm font-bold text-white tracking-wide">Interactive Geodesic Route Visualizer</h2>
+                            </div>
+                            <!-- Map Legend -->
+                            <div class="flex items-center gap-3 text-[11px] text-slate-300 bg-[#07162b]/80 px-3 py-1 rounded-lg border border-[#1b3a5c]">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400"></span> Origin</span>
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span> Destination</span>
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400"></span> Layover</span>
+                                <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-emerald-400"></span> Flight Arc</span>
+                            </div>
+                        </div>
+
+                        <!-- Leaflet Map Canvas Container -->
+                        <div id="map-container" class="w-full flex-1 rounded-xl overflow-hidden border border-[#1b3a5c]/60 min-h-[500px]"></div>
+
+                        <!-- Footer instruction bar -->
+                        <div class="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-1">
+                            <span>✈ Dynamic curved geodesic flight trajectory &bull; Animated cockpit plane tracking</span>
+                            <span>Scroll to zoom &bull; Drag to pan &bull; Click airport for details</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- TAB 2: NETWORK TOPOLOGY EXPLORER                          -->
+        <!-- ======================================================== -->
+        <div id="pane-network" class="tab-content-pane hidden flex-1 flex flex-col gap-4">
+            <div class="glass-panel rounded-2xl p-5 border border-[#1b3a5c] flex-1 flex flex-col min-h-[620px]">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <span>Airport Network Graph & Topology</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Undirected weighted graph visualization derived strictly from airports.csv & routes.csv</p>
+                    </div>
+                    <div id="network-stats-badge" class="px-3 py-1 rounded-lg bg-cyan-950/80 border border-cyan-800 text-cyan-300 font-mono text-xs font-bold">
+                        Loading network...
+                    </div>
+                </div>
+
+                <!-- Network Leaflet Map -->
+                <div id="network-map-container" class="w-full flex-1 rounded-xl overflow-hidden border border-[#1b3a5c]/60 min-h-[520px]"></div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- TAB 3: ANALYTICS STUDIO                                   -->
+        <!-- ======================================================== -->
+        <div id="pane-analytics" class="tab-content-pane hidden flex-1 flex flex-col gap-5">
+            
+            <!-- Key Performance Indicator Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-panel p-4 rounded-2xl border border-[#1b3a5c]">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Airports in Network</div>
+                    <div id="kpi-total-airports" class="text-2xl font-black text-cyan-400 font-mono mt-1">—</div>
+                    <div class="text-[10px] text-slate-500 mt-1">From airports.csv</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-[#1b3a5c]">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Route Connections</div>
+                    <div id="kpi-total-routes" class="text-2xl font-black text-emerald-400 font-mono mt-1">—</div>
+                    <div class="text-[10px] text-slate-500 mt-1">From routes.csv</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-[#1b3a5c]">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Average Leg Distance</div>
+                    <div id="kpi-avg-distance" class="text-2xl font-black text-blue-400 font-mono mt-1">—</div>
+                    <div class="text-[10px] text-slate-500 mt-1">Mean flight length</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-[#1b3a5c]">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Average Travel Time</div>
+                    <div id="kpi-avg-duration" class="text-2xl font-black text-purple-400 font-mono mt-1">—</div>
+                    <div class="text-[10px] text-slate-500 mt-1">Mean flight duration</div>
+                </div>
+            </div>
+
+            <!-- Second Row KPIs -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-panel p-4 rounded-2xl border border-[#1b3a5c]">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Shortest Leg</div>
+                    <div id="kpi-shortest-leg" class="text-lg font-black text-emerald-400 font-mono mt-1">—</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-[#1b3a5c]">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Longest Leg</div>
+                    <div id="kpi-longest-leg" class="text-lg font-black text-amber-400 font-mono mt-1">—</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-[#1b3a5c]">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Network Density</div>
+                    <div id="kpi-network-density" class="text-lg font-black text-cyan-400 font-mono mt-1">—</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-[#1b3a5c]">
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Graph Diameter</div>
+                    <div id="kpi-network-diameter" class="text-lg font-black text-purple-400 font-mono mt-1">—</div>
+                </div>
+            </div>
+
+            <!-- Chart.js Visualizations Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <!-- Chart 1: Top Busiest Airports -->
+                <div class="glass-panel p-5 rounded-2xl border border-[#1b3a5c] flex flex-col">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">Top Busiest Airports (Hubs)</h3>
+                    <p class="text-[11px] text-slate-400 mb-4">Ranked by total direct connected routes</p>
+                    <div class="relative flex-1 min-h-[260px]">
+                        <canvas id="chart-busiest-airports"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Route Distance Distribution -->
+                <div class="glass-panel p-5 rounded-2xl border border-[#1b3a5c] flex flex-col">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-1">Route Distance Distribution</h3>
+                    <p class="text-[11px] text-slate-400 mb-4">Frequency histogram of flight connection distances</p>
+                    <div class="relative flex-1 min-h-[260px]">
+                        <canvas id="chart-distance-dist"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 3: Distance vs Travel Time Scatter -->
+                <div class="glass-panel p-5 rounded-2xl border border-[#1b3a5c] flex flex-col">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-1">Distance vs. Travel Time</h3>
+                    <p class="text-[11px] text-slate-400 mb-4">Correlation scatter plot between leg distance and flight minutes</p>
+                    <div class="relative flex-1 min-h-[260px]">
+                        <canvas id="chart-scatter"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 4: Longest vs Shortest Flights -->
+                <div class="glass-panel p-5 rounded-2xl border border-[#1b3a5c] flex flex-col">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1">Extremes: Longest & Shortest Routes</h3>
+                    <p class="text-[11px] text-slate-400 mb-4">Comparison of top 5 longest and 5 shortest connections</p>
+                    <div class="relative flex-1 min-h-[260px]">
+                        <canvas id="chart-longest-shortest"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- TAB 4: AIRPORT MANAGEMENT (CRUD)                          -->
+        <!-- ======================================================== -->
+        <div id="pane-airports" class="tab-content-pane hidden flex-1 flex flex-col gap-4">
+            <div class="glass-panel rounded-2xl p-5 border border-[#1b3a5c] flex-1 flex flex-col">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white">Airport Directory</h2>
+                        <p class="text-xs text-slate-400">Manage airports stored directly in <span class="font-mono text-cyan-400">data/airports.csv</span></p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input 
+                            type="text" 
+                            id="airport-table-search" 
+                            placeholder="Filter airports..." 
+                            class="glass-input px-3 py-1.5 rounded-xl text-xs w-48 sm:w-64"
+                        />
+                        <button id="open-add-airport-modal-btn" class="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-lg shadow-emerald-500/20">
+                            <span>＋</span>
+                            <span>Add Airport</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Airports Table -->
+                <div class="flex-1 overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/80 border-b border-slate-800 text-[11px] uppercase tracking-wider text-cyan-400 font-mono">
+                                <th class="px-4 py-3">Code</th>
+                                <th class="px-4 py-3">Airport Name</th>
+                                <th class="px-4 py-3">City</th>
+                                <th class="px-4 py-3">Coordinates (Lat, Lon)</th>
+                                <th class="px-4 py-3">Connections</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="airports-table-body" class="divide-y divide-slate-800/40"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- TAB 5: ROUTE CONNECTIONS (CRUD)                           -->
+        <!-- ======================================================== -->
+        <div id="pane-routes" class="tab-content-pane hidden flex-1 flex flex-col gap-4">
+            <div class="glass-panel rounded-2xl p-5 border border-[#1b3a5c] flex-1 flex flex-col">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white">Route Connections</h2>
+                        <p class="text-xs text-slate-400">Manage weighted flight legs stored directly in <span class="font-mono text-cyan-400">data/routes.csv</span></p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input 
+                            type="text" 
+                            id="route-table-search" 
+                            placeholder="Filter routes..." 
+                            class="glass-input px-3 py-1.5 rounded-xl text-xs w-48 sm:w-64"
+                        />
+                        <button id="open-add-route-modal-btn" class="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-lg shadow-emerald-500/20">
+                            <span>＋</span>
+                            <span>Add Connection</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Routes Table -->
+                <div class="flex-1 overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/80 border-b border-slate-800 text-[11px] uppercase tracking-wider text-cyan-400 font-mono">
+                                <th class="px-4 py-3">#</th>
+                                <th class="px-4 py-3">Connection</th>
+                                <th class="px-4 py-3">Cities</th>
+                                <th class="px-4 py-3">Distance (km)</th>
+                                <th class="px-4 py-3">Flight Time</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="routes-table-body" class="divide-y divide-slate-800/40"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- MODALS                                                   -->
+    <!-- ======================================================== -->
+
+    <!-- Add/Edit Airport Modal -->
+    <div id="airport-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-cyan-500/40 shadow-2xl">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                <h3 id="airport-modal-title" class="text-sm font-bold text-white uppercase tracking-wider">Add Airport</h3>
+                <button class="close-airport-modal-btn text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <form id="airport-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Airport Code (3-letter IATA)</label>
+                    <input type="text" id="modal-airport-code" required maxlength="5" placeholder="e.g. JFK" class="glass-input w-full px-3 py-2 rounded-xl text-xs font-mono uppercase font-bold" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Airport Name</label>
+                    <input type="text" id="modal-airport-name" required placeholder="e.g. John F. Kennedy International Airport" class="glass-input w-full px-3 py-2 rounded-xl text-xs font-medium" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">City</label>
+                    <input type="text" id="modal-airport-city" required placeholder="e.g. New York" class="glass-input w-full px-3 py-2 rounded-xl text-xs font-medium" />
+                </div>
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button type="button" class="close-airport-modal-btn px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/20">Save Airport</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Route Modal -->
+    <div id="route-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-cyan-500/40 shadow-2xl">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                <h3 id="route-modal-title" class="text-sm font-bold text-white uppercase tracking-wider">Add Route Connection</h3>
+                <button class="close-route-modal-btn text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <form id="route-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Origin Airport</label>
+                    <select id="modal-route-source" required class="glass-input w-full px-3 py-2 rounded-xl text-xs font-mono font-bold bg-slate-900"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Destination Airport</label>
+                    <select id="modal-route-destination" required class="glass-input w-full px-3 py-2 rounded-xl text-xs font-mono font-bold bg-slate-900"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Distance (km)</label>
+                    <input type="number" id="modal-route-distance" required min="1" step="any" placeholder="e.g. 1197" class="glass-input w-full px-3 py-2 rounded-xl text-xs font-mono font-bold" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Flight Duration (minutes, optional)</label>
+                    <input type="number" id="modal-route-time" min="1" step="any" placeholder="e.g. 150" class="glass-input w-full px-3 py-2 rounded-xl text-xs font-mono" />
+                </div>
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button type="button" class="close-route-modal-btn px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/20">Save Route</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/map.js"></script>
+    <script src="/static/js/charts.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+customtkinter
+numpy
+pandas
+networkx
+matplotlib
+seaborn
+plotly
+pytest
+fastapi>=0.110.0
+uvicorn>=0.28.0

@@ -1,0 +1,283 @@
+/* Modern Cockpit Dark Aviation Theme */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+    --bg-dark: #07162b;
+    --panel-dark: #0a1d35;
+    --panel-card: rgba(10, 29, 53, 0.75);
+    --panel-alt: #0d2542;
+    --border-color: #1b3a5c;
+    --border-hover: #265585;
+    --neon-green: #00c98d;
+    --neon-green-glow: rgba(0, 201, 141, 0.4);
+    --neon-blue: #1e90ff;
+    --neon-cyan: #19b5e6;
+    --neon-purple: #a56bff;
+    --neon-amber: #f59e0b;
+    --neon-rose: #f43f5e;
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+code, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+    background: var(--panel-card);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border-color);
+}
+
+.glass-panel-subtle {
+    background: rgba(13, 37, 66, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(27, 58, 92, 0.6);
+}
+
+.glass-input {
+    background: rgba(6, 18, 38, 0.85);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    transition: all 0.2s ease-in-out;
+}
+
+.glass-input:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(25, 181, 230, 0.3);
+    outline: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(7, 22, 43, 0.6);
+}
+::-webkit-scrollbar-thumb {
+    background: #1b3a5c;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #285482;
+}
+
+/* Glow effects */
+.glow-emerald {
+    box-shadow: 0 0 20px rgba(0, 201, 141, 0.25);
+}
+
+.glow-cyan {
+    box-shadow: 0 0 20px rgba(25, 181, 230, 0.25);
+}
+
+.text-glow-emerald {
+    text-shadow: 0 0 12px rgba(0, 201, 141, 0.5);
+}
+
+.text-glow-cyan {
+    text-shadow: 0 0 12px rgba(25, 181, 230, 0.5);
+}
+
+/* Radar Pulse Marker Animation */
+.radar-pulse-origin {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    background-color: var(--neon-cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.radar-pulse-origin::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: var(--neon-cyan);
+    border-radius: 50%;
+    animation: radarRipple 1.8s infinite ease-out;
+    opacity: 0.8;
+}
+
+.radar-pulse-dest {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    background-color: var(--neon-green);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--neon-green);
+}
+
+.radar-pulse-dest::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: var(--neon-green);
+    border-radius: 50%;
+    animation: radarRipple 1.8s infinite ease-out;
+    opacity: 0.8;
+}
+
+.radar-pulse-layover {
+    position: relative;
+    width: 11px;
+    height: 11px;
+    background-color: var(--neon-amber);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--neon-amber);
+}
+
+.airport-dot-default {
+    width: 8px;
+    height: 8px;
+    background-color: #4a6a8c;
+    border-radius: 50%;
+    border: 1px solid #10263f;
+    transition: transform 0.2s;
+}
+
+.airport-dot-default:hover {
+    transform: scale(1.6);
+    background-color: var(--neon-cyan);
+    box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+@keyframes radarRipple {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(3.5);
+        opacity: 0;
+    }
+}
+
+/* Airplane flight animation along dash */
+@keyframes flightFlow {
+    to {
+        stroke-dashoffset: -40;
+    }
+}
+
+.animated-flight-line {
+    stroke-dasharray: 8, 8;
+    animation: flightFlow 2s linear infinite;
+}
+
+/* Leaflet Dark Custom Overrides */
+.leaflet-container {
+    background-color: #061325 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.leaflet-popup-content-wrapper {
+    background: rgba(10, 29, 53, 0.95) !important;
+    color: #ffffff !important;
+    border: 1px solid #1b3a5c !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.leaflet-popup-tip {
+    background: #0a1d35 !important;
+}
+
+.leaflet-control-zoom a {
+    background-color: rgba(10, 29, 53, 0.85) !important;
+    color: #94a3b8 !important;
+    border: 1px solid #1b3a5c !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background-color: #134a7c !important;
+    color: #ffffff !important;
+}
+
+.leaflet-control-attribution {
+    background: rgba(7, 22, 43, 0.7) !important;
+    color: #475569 !important;
+    font-size: 10px !important;
+}
+
+.leaflet-control-attribution a {
+    color: #64748b !important;
+}
+
+/* Custom Marker Labels */
+.map-airport-label {
+    background: rgba(7, 22, 43, 0.85);
+    border: 1px solid rgba(27, 58, 92, 0.8);
+    color: #e2e8f0;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Toast Container */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 380px;
+}
+
+.toast {
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.3s ease;
+}
+
+.toast.hiding {
+    animation: toastSlideOut 0.25s ease-in forwards;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(60px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(60px);
+    }
+}
