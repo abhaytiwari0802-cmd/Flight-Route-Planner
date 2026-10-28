@@ -1,4 +1,4 @@
-# ✈ Flight Route Planner — Modern Full-Stack Web Application
+# ✈ Flight Route Optimization Using Graph Algorithmsr — Modern Full-Stack Web Application
 
 A full-stack, modern aviation web application and dashboard modernized from Tkinter/CustomTkinter into **FastAPI**, **Tailwind CSS**, **Leaflet.js**, and **Chart.js** with **pure CSV persistence** (`data/airports.csv`, `data/routes.csv`) — zero external databases.
 
